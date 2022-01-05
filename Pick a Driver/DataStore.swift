@@ -8,28 +8,31 @@
 import Foundation
 
 class DataStore: ObservableObject {
-    @Published var persons: [Person] {
+    var period: String
+    @Published var students: [Student] {
         didSet {
             let encoder = JSONEncoder()
-            if let encoded = try? encoder.encode(persons) {
-                UserDefaults.standard.set(encoded, forKey: "Pick a Driver")
+            if let encoded = try? encoder.encode(students) {
+                UserDefaults.standard.set(encoded, forKey: "Pick a Driver: \(period) Period")
             }
         }
     }
     
-    init() {
-        if let data = UserDefaults.standard.data(forKey: "Pick a Driver") {
+    init(period: String) {
+        self.period = period
+        if let data = UserDefaults.standard.data(forKey: "Pick a Driver: \(period) Period") {
             let decoder = JSONDecoder()
-            if let decoded = try? decoder.decode([Person].self, from: data) {
-                self.persons = decoded
+            if let decoded = try? decoder.decode([Student].self, from: data) {
+                self.students = decoded
                 return
             }
         }
-        persons = []
+        students = []
     }
 }
 
-struct Person: Identifiable, Codable {
+struct Student: Identifiable, Codable {
     var id = UUID()
     var name = String()
 }
+

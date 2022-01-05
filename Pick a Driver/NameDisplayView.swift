@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  NameDisplayView.swift
 //  Pick a Driver
 //
 //  Created by Tom Bredemeier on 1/5/22.
@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    @ObservedObject var dataStore = DataStore()
-    //@State private var names = [String]()
+struct NameDisplayView: View {
+    var period: String
+    @ObservedObject var dataStore: DataStore
     @State private var showEditList = false
     @State private var selectedName = ""
     var body: some View {
@@ -22,13 +22,13 @@ struct ContentView: View {
             }
             if selectedName == "" {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(125), spacing: 5), count: 3), spacing: 5, content: {
-                    ForEach($dataStore.persons) { $person in
-                        NameView(person: $person)
+                    ForEach($dataStore.students) { $student in
+                        NameView(student: $student)
                     }
                 })
                 Spacer()
                 Button("Start") {
-                    selectedName = dataStore.persons.randomElement()?.name ?? ""
+                    selectedName = dataStore.students.randomElement()?.name ?? ""
                 }
                 .font(.title)
                 .foregroundColor(.green)
@@ -49,23 +49,29 @@ struct ContentView: View {
         }
         .background(Color.gray.opacity(0.3))
         .sheet(isPresented: $showEditList) {
-            EditNamesView(persons: $dataStore.persons)
+            EditNamesView(students: $dataStore.students)
         }
+        .navigationBarTitle("\(period) Period", displayMode: .inline)
+    }
+    
+    init(period: String) {
+        self.period = period
+        dataStore = DataStore(period: period)
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
+struct NameDisplayView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        NameDisplayView(period: "1st")
     }
 }
 
 struct NameView: View {
-    @Binding var person: Person
+    @Binding var student: Student
     var body: some View {
         ZStack {
             Color.red.opacity(0.6)
-            Text(person.name)
+            Text(student.name)
                 .font(.title)
         }
         .frame(width: 125, height: 40, alignment: .center)
@@ -74,7 +80,7 @@ struct NameView: View {
 }
 
 struct EditNamesView: View {
-    @Binding var persons: [Person]
+    @Binding var students: [Student]
     @State private var name = String()
     var body: some View {
         VStack {
@@ -84,20 +90,21 @@ struct EditNamesView: View {
                 Button("Add") {
                     name = name.trimmingCharacters(in: .whitespacesAndNewlines)
                     if name.count > 0 {
-                        persons.append(Person(name: name))
+                        students.append(Student(name: name))
                         name = ""
                     }
                 }
                 .padding()
             }
             List {
-                ForEach(persons) { person in
-                    Text(person.name)
+                ForEach(students) { student in
+                    Text(student.name)
                 }
                 .onDelete { offsets in
-                    persons.remove(atOffsets: offsets)
+                    students.remove(atOffsets: offsets)
                 }
             }
         }
     }
 }
+
