@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var names = [String]()
+    @ObservedObject var dataStore = DataStore()
+    //@State private var names = [String]()
     @State private var showEditList = false
     @State private var selectedName = ""
     var body: some View {
@@ -21,13 +22,13 @@ struct ContentView: View {
             }
             if selectedName == "" {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(125), spacing: 5), count: 3), spacing: 5, content: {
-                    ForEach(names, id: \.self) { name in
-                        NameView(name: name)
+                    ForEach($dataStore.persons) { $person in
+                        NameView(person: $person)
                     }
                 })
                 Spacer()
                 Button("Start") {
-                    selectedName = names.randomElement() ?? ""
+                    selectedName = dataStore.persons.randomElement()?.name ?? ""
                 }
                 .font(.title)
                 .foregroundColor(.green)
@@ -48,7 +49,7 @@ struct ContentView: View {
         }
         .background(Color.gray.opacity(0.3))
         .sheet(isPresented: $showEditList) {
-            EditNamesView(names: $names)
+            EditNamesView(persons: $dataStore.persons)
         }
     }
 }
@@ -60,11 +61,11 @@ struct ContentView_Previews: PreviewProvider {
 }
 
 struct NameView: View {
-    var name: String
+    @Binding var person: Person
     var body: some View {
         ZStack {
             Color.red.opacity(0.6)
-            Text(name)
+            Text(person.name)
                 .font(.title)
         }
         .frame(width: 125, height: 40, alignment: .center)
@@ -73,7 +74,7 @@ struct NameView: View {
 }
 
 struct EditNamesView: View {
-    @Binding var names: [String]
+    @Binding var persons: [Person]
     @State private var name = String()
     var body: some View {
         VStack {
@@ -82,19 +83,19 @@ struct EditNamesView: View {
                     .padding()
                 Button("Add") {
                     name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if name.count > 0 && !names.contains(name) {
-                        names.append(name)
+                    if name.count > 0 {
+                        persons.append(Person(name: name))
                         name = ""
                     }
                 }
                 .padding()
             }
             List {
-                ForEach(names, id: \.self) { name in
-                    Text(name)
+                ForEach(persons) { person in
+                    Text(person.name)
                 }
                 .onDelete { offsets in
-                    names.remove(atOffsets: offsets)
+                    persons.remove(atOffsets: offsets)
                 }
             }
         }
