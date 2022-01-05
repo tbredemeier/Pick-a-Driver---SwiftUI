@@ -100,11 +100,15 @@ struct EditNamesView: View {
                 ForEach(students) { student in
                     Text(student.name)
                 }
+                .onMove(perform: { source, destination in
+                    students.move(fromOffsets: source, toOffset: destination)
+                })
                 .onDelete { offsets in
                     students.remove(atOffsets: offsets)
                 }
             }
         }
+        .environment(\.editMode, .constant(.active))
     }
 }
 
