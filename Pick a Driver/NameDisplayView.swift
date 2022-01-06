@@ -8,9 +8,11 @@
 import SwiftUI
 
 struct NameDisplayView: View {
-    var period: String
+    private var period: String
+    private let timer = Timer.publish(every: 2, on: .current, in: .common).autoconnect()
     @ObservedObject var dataStore: DataStore
     @State private var showEditList = false
+    @State private var timerStarted = false
     @State private var selectedName = ""
     var body: some View {
         VStack {
@@ -27,17 +29,25 @@ struct NameDisplayView: View {
                     }
                 })
                 Spacer()
-                Button("Start") {
-                    var eligibles = [Student]()
-                    for student in dataStore.students {
-                        if !student.tapped && !student.eliminated {
-                            eligibles.append(student)
-                        }
+                if timerStarted {
+                    Button("Stop") {
+                        timerStarted.toggle()
                     }
-                    selectedName = eligibles.randomElement()?.name ?? ""
+                    .font(.title)
+                    .foregroundColor(.red)
                 }
-                .font(.title)
-                .foregroundColor(.green)
+                else {
+                    Button("Start") {
+                        for index in dataStore.students.indices {
+                            if dataStore.students[index].tapped {
+                                dataStore.students[index].eliminated = true
+                            }
+                        }
+                        timerStarted.toggle()
+                    }
+                    .font(.title)
+                    .foregroundColor(.green)
+                }
             }
             else {
                 Text(selectedName)
@@ -48,9 +58,41 @@ struct NameDisplayView: View {
                 Spacer()
                 Button("Reset") {
                     selectedName = ""
+                    for index in dataStore.students.indices {
+                        if dataStore.students[index].eliminated {
+                            dataStore.students[index].eliminated = false
+                        }
+                    }
                 }
                 .font(.title)
                 .foregroundColor(.yellow)
+            }
+        }
+        .onReceive(timer) { _ in
+            if timerStarted {
+                var eligibles = [Student]()
+                for student in dataStore.students {
+                    if !student.tapped && !student.eliminated {
+                        eligibles.append(student)
+                    }
+                }
+                if eligibles.count > 1 {
+                    let eliminatedStudentID = eligibles.randomElement()!.id
+                    for index in dataStore.students.indices {
+                        if dataStore.students[index].id == eliminatedStudentID {
+                            dataStore.students[index].eliminated = true
+                        }
+                    }
+                }
+                else {
+                    timerStarted = false
+                    if eligibles.count == 1 {
+                        selectedName = eligibles.first!.name
+                    }
+                    else {
+                        selectedName = " "
+                    }
+                }
             }
         }
         .background(Color.gray.opacity(0.3))
