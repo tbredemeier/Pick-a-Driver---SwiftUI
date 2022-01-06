@@ -34,5 +34,7 @@ class DataStore: ObservableObject {
 struct Student: Identifiable, Codable {
     var id = UUID()
     var name = String()
+    var tapped = false
+    var eliminated = false
 }
 

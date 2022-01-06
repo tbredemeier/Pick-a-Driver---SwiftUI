@@ -28,7 +28,13 @@ struct NameDisplayView: View {
                 })
                 Spacer()
                 Button("Start") {
-                    selectedName = dataStore.students.randomElement()?.name ?? ""
+                    var eligibles = [Student]()
+                    for student in dataStore.students {
+                        if !student.tapped && !student.eliminated {
+                            eligibles.append(student)
+                        }
+                    }
+                    selectedName = eligibles.randomElement()?.name ?? ""
                 }
                 .font(.title)
                 .foregroundColor(.green)
@@ -73,6 +79,10 @@ struct NameView: View {
             Color.red.opacity(0.6)
             Text(student.name)
                 .font(.title)
+                .onTapGesture {
+                    student.tapped.toggle()
+                }
+                .opacity(student.eliminated ? 0 : student.tapped ? 0.3 : 1.0)
         }
         .frame(width: 125, height: 40, alignment: .center)
         .cornerRadius(20)
