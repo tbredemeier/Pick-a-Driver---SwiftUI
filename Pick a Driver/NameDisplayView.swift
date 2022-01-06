@@ -9,10 +9,13 @@ import SwiftUI
 
 struct NameDisplayView: View {
     private var period: String
-    private let timer = Timer.publish(every: 2, on: .current, in: .common).autoconnect()
+    private var initialDelay = 1.0
+    private var additionalDelay = 0.2
     @ObservedObject var dataStore: DataStore
     @State private var showEditList = false
+    @State private var timer = Timer.publish(every: 1.0, on: .current, in: .common).autoconnect()
     @State private var timerStarted = false
+    @State private var timerDelay: Double
     @State private var selectedName = ""
     var body: some View {
         VStack {
@@ -30,11 +33,11 @@ struct NameDisplayView: View {
                 })
                 Spacer()
                 if timerStarted {
-                    Button("Stop") {
-                        timerStarted.toggle()
+                    Button("Reset") {
+                        reset()
                     }
                     .font(.title)
-                    .foregroundColor(.red)
+                    .foregroundColor(.yellow)
                 }
                 else {
                     Button("Start") {
@@ -43,6 +46,7 @@ struct NameDisplayView: View {
                                 dataStore.students[index].eliminated = true
                             }
                         }
+                        timer = Timer.publish(every: timerDelay, on: .current, in: .common).autoconnect()
                         timerStarted.toggle()
                     }
                     .font(.title)
@@ -57,12 +61,7 @@ struct NameDisplayView: View {
                     .padding()
                 Spacer()
                 Button("Reset") {
-                    selectedName = ""
-                    for index in dataStore.students.indices {
-                        if dataStore.students[index].eliminated {
-                            dataStore.students[index].eliminated = false
-                        }
-                    }
+                    reset()
                 }
                 .font(.title)
                 .foregroundColor(.yellow)
@@ -93,6 +92,9 @@ struct NameDisplayView: View {
                         selectedName = " "
                     }
                 }
+                timer.upstream.connect().cancel()
+                timerDelay += additionalDelay
+                timer = Timer.publish(every: timerDelay, on: .current, in: .common).autoconnect()
             }
         }
         .background(Color.gray.opacity(0.3))
@@ -105,6 +107,19 @@ struct NameDisplayView: View {
     init(period: String) {
         self.period = period
         dataStore = DataStore(period: period)
+        timerDelay = initialDelay
+    }
+    
+    private func reset() {
+        timerStarted = false
+        timerDelay = initialDelay
+        timer.upstream.connect().cancel()
+        selectedName = ""
+        for index in dataStore.students.indices {
+            if dataStore.students[index].eliminated {
+                dataStore.students[index].eliminated = false
+            }
+        }
     }
 }
 
@@ -163,4 +178,3 @@ struct EditNamesView: View {
         .environment(\.editMode, .constant(.active))
     }
 }
-
