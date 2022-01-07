@@ -9,13 +9,11 @@ import SwiftUI
 
 struct NameDisplayView: View {
     private var period: String
-    private var initialDelay = 1.0
-    private var additionalDelay = 0.2
     @ObservedObject var dataStore: DataStore
     @State private var showEditList = false
     @State private var timer = Timer.publish(every: 1.0, on: .current, in: .common).autoconnect()
     @State private var timerStarted = false
-    @State private var timerDelay: Double
+    @State private var timerDelay = 1.0
     @State private var selectedName = ""
     var body: some View {
         VStack {
@@ -46,7 +44,7 @@ struct NameDisplayView: View {
                                 dataStore.students[index].eliminated = true
                             }
                         }
-                        timer = Timer.publish(every: timerDelay, on: .current, in: .common).autoconnect()
+                        timer = Timer.publish(every: 1.0, on: .current, in: .common).autoconnect()
                         timerStarted.toggle()
                     }
                     .font(.title)
@@ -75,7 +73,7 @@ struct NameDisplayView: View {
                         eligibles.append(student)
                     }
                 }
-                if eligibles.count > 1 {
+                if eligibles.count > 2 {
                     let eliminatedStudentID = eligibles.randomElement()!.id
                     for index in dataStore.students.indices {
                         if dataStore.students[index].id == eliminatedStudentID {
@@ -85,16 +83,23 @@ struct NameDisplayView: View {
                 }
                 else {
                     timerStarted = false
-                    if eligibles.count == 1 {
-                        selectedName = eligibles.first!.name
-                    }
-                    else {
-                        selectedName = " "
-                    }
+                    selectedName = eligibles.randomElement()?.name ?? ""
                 }
                 timer.upstream.connect().cancel()
-                timerDelay += additionalDelay
-                timer = Timer.publish(every: timerDelay, on: .current, in: .common).autoconnect()
+                if timerStarted {
+                    // slow down the selection as eligibles get fewer
+                    switch eligibles.count {
+                    case 10..<20:
+                        timerDelay = 1.0
+                    case 5..<10:
+                        timerDelay = 2.0
+                    case 0..<5:
+                        timerDelay = 3.0
+                    default:
+                        timerDelay = 0.5
+                    }
+                    timer = Timer.publish(every: timerDelay, on: .current, in: .common).autoconnect()
+                }
             }
         }
         .background(Color.gray.opacity(0.3))
@@ -107,12 +112,11 @@ struct NameDisplayView: View {
     init(period: String) {
         self.period = period
         dataStore = DataStore(period: period)
-        timerDelay = initialDelay
+        reset()
     }
     
     private func reset() {
         timerStarted = false
-        timerDelay = initialDelay
         timer.upstream.connect().cancel()
         selectedName = ""
         for index in dataStore.students.indices {
