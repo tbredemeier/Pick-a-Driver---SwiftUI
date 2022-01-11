@@ -16,7 +16,7 @@ struct PeriodView: View {
                     CustomNavigationView(period: period)
                 }
             }
-            .navigationTitle("Select a class period")
+            .navigationBarTitle("Select a class period", displayMode: .inline)
         }
     }
 }

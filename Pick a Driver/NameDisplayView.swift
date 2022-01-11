@@ -139,7 +139,7 @@ struct NameView: View {
         ZStack {
             Color.red.opacity(0.6)
             Text(student.name)
-                .font(.title)
+                .font(.headline)
                 .onTapGesture {
                     student.tapped.toggle()
                 }
